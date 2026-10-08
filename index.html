@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily Call Register 2026</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:15px}
+main{max-width:800px;margin:auto}
+h1{background:#1455c0;color:white;padding:20px;border-radius:12px;text-align:center}
+section{background:white;padding:18px;margin:15px 0;border-radius:12px}
+input,select,textarea,button{width:100%;box-sizing:border-box;padding:12px;margin:7px 0;border-radius:7px;font-size:16px}
+input,select,textarea{border:1px solid #ccc}
+button{background:#1455c0;color:white;border:0;font-weight:bold}
+.item{border-bottom:1px solid #ddd;padding:12px 0;overflow-wrap:anywhere}
+.delete{background:#c62828}
+small{color:#666}
+</style>
+</head>
+<body>
+<main>
+<h1>📞 Daily Call Register 2026</h1>
+<section>
+<h2>नई कॉल दर्ज करें</h2>
+<form id="form">
+<input id="date" type="date" required>
+<input id="name" placeholder="व्यक्ति का नाम" required>
+<input id="phone" type="tel" placeholder="मोबाइल नंबर">
+<select id="status">
+<option>Connected</option>
+<option>No Answer</option>
+<option>Busy</option>
+<option>Follow Up</option>
+</select>
+<textarea id="notes" placeholder="कॉल की जानकारी"></textarea>
+<button type="submit">कॉल सेव करें</button>
+</form>
+</section>
+<section>
+<h2>कॉल रिकॉर्ड</h2>
+<input id="search" placeholder="नाम या नंबर खोजें">
+<button id="export" type="button">CSV डाउनलोड</button>
+<div id="records"></div>
+</section>
+<p><small>रिकॉर्ड इसी ब्राउज़र में सेव होते हैं। बैकअप के लिए CSV डाउनलोड करें।</small></p>
+</main>
+<script>
+const KEY='daily-calls-2026';
+let calls=[];
+try{calls=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(calls))calls=[]}catch{calls=[]}
+const el=id=>document.getElementById(id);
+const localDate=()=>{let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+el('date').value=localDate();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(calls));return true}catch(e){alert('सेव नहीं हुआ');return false}}
+function show(){
+const box=el('records');box.replaceChildren();
+const q=el('search').value.toLowerCase();
+calls.filter(x=>(x.name+' '+x.phone).toLowerCase().includes(q)).slice().reverse().forEach(x=>{
+const div=document.createElement('div');div.className='item';
+const p=document.createElement('p');
+p.textContent=x.date+' | '+x.name+' | '+x.phone+' | '+x.status+' | '+x.notes;
+const b=document.createElement('button');b.className='delete';b.textContent='डिलीट';
+b.onclick=()=>{if(confirm('रिकॉर्ड हटाएँ?')){const old=calls.slice();calls=calls.filter(y=>y.id!==x.id);if(!save())calls=old;show()}};
+div.append(p,b);box.appendChild(div);
+});
+}
+el('form').onsubmit=e=>{
+e.preventDefault();
+const x={id:Date.now()+'-'+Math.random(),date:el('date').value,name:el('name').value.trim(),phone:el('phone').value.trim(),status:el('status').value,notes:el('notes').value.trim()};
+if(!x.name)return;
+calls.push(x);if(!save()){calls.pop();return}
+el('form').reset();el('date').value=localDate();show();
+};
+el('search').oninput=show;
+el('export').onclick=()=>{
+const cols=['date','name','phone','status','notes'];
+const csv=[cols.join(','),...calls.map(x=>cols.map(k=>'"'+String(x[k]||'').replace(/"/g,'""')+'"').join(','))].join('\r\n');
+const url=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+const a=document.createElement('a');a.href=url;a.download='daily-calls-2026.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+show();
+</script>
+</body>
+</html>
